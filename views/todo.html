@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width , height=device-height, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
+		<!--[if lt IE 9]>
+			<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link rel="stylesheet/less" href="/style" />
+		<title>Todolist en NodeJs/Express/SocketIo</title>
+	</head>
+	<body class="main">
+		<div class="main_body">
+
+			<header class="main_body_header">
+				<h1>SbibouJr todolist</h1>
+			</header>
+
+			<form class="form_todo" method="post" action="#">
+				<input class="form_todo_button" type="submit" value="Ajouter"/>
+				<input class="form_todo_text" type="text" placeholder="Que dois-je faire ? "/>
+			</form>
+
+			<div class="todolist">
+				<ul>
+					En attente de connexion
+				</ul>
+			</div>
+
+		</div>
+
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/less.js/2.7.2/less.min.js"></script>
+
+		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+		<script>
+
+			let socket = io.connect('http://localhost:8080')
+			let todolist = [];
+
+			// ******************** SERVEUR --> CLIENT ***************************
+			socket.on("todolist" , (p_todolist) => {
+				console.log("todo");
+				todolist = p_todolist;
+				let todolistHtml = todolist.length > 0 ? "" : " Todolist vide ...";
+				for(let i = 0; i < todolist.length;i++){
+					todolistHtml += '<li><a class="todo_remove" href="" id="'+i+'"> X </a> - '+todolist[i]+'</li>';
+				}
+				document.querySelector(".todolist ul").innerHTML = todolistHtml;
+				addEventRemove();
+
+			});
+
+
+			socket.on("add", (p_todo) => {
+				if(todolist.length === 0){
+					document.querySelector(".todolist ul").innerHTML = "";
+				}
+				todolist.push(p_todo);
+				document.querySelector(".todolist ul").innerHTML += '<li><a class="todo_remove" href="" id="'+(todolist.length-1)+'"> X </a> - '+todolist[todolist.length-1]+'</li>' ;
+				addEventRemove();
+			});
+
+			socket.on("remove", (p_id) => {
+				if(p_id >= 0 && p_id < todolist.length){
+					todolist.splice( p_id, 1 );
+
+					let todolistHtml = todolist.length === 0 ? "Todolist vide ..." : "" ;
+
+					for(let i = 0; i < todolist.length;i++){
+						todolistHtml += '<li><a class="todo_remove" href="" id="'+i+'"> X </a> - '+todolist[i]+'</li>';
+					}
+					document.querySelector(".todolist ul").innerHTML = todolistHtml;
+					addEventRemove();
+				}
+			});
+
+
+			// ******************** CLIENT / SERVEUR ******************
+			document.getElementsByClassName("form_todo_button")[0].addEventListener("click", (e) => {
+				e.preventDefault();
+				let inputElt = document.getElementsByClassName("form_todo_text")[0];
+				socket.emit("add", inputElt.value);
+				 if(todolist.length === 0 ){
+				 	document.querySelector(".todolist ul").innerHTML = "";
+				 }
+				todolist.push(inputElt.value);
+
+				document.querySelector(".todolist ul").innerHTML += '<li><a class="todo_remove" href="" id="'+(todolist.length-1)+'"> X </a> - '+ todolist[todolist.length-1]+'</li>';
+				inputElt.value = "";
+				addEventRemove();
+
+			});
+
+			let addEventRemove = function(){
+				let listRmTodo = document.getElementsByClassName("todo_remove");
+				for(let i = 0; i < listRmTodo.length; i++){
+					listRmTodo[i].addEventListener("click", function(e) {
+						e.preventDefault();
+						todolist.splice( e.target.id, 1 );
+						let todolistHtml = todolist.length === 0 ? "Todolist vide ..." : "" ;
+						for(let i = 0; i < todolist.length;i++){
+							todolistHtml += '<li><a class="todo_remove" href="" id="'+i+'"> X </a> - '+todolist[i]+'</li>';
+						}
+						document.querySelector(".todolist ul").innerHTML = todolistHtml;
+						addEventRemove();
+						console.log(e.target.id);
+						socket.emit("remove", e.target.id);
+					});
+				}
+			}
+
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "mon-app-de-todo-list-temps-reel",
+  "version": "0.1.0",
+  "dependencies": {
+    "express": "~4.15",
+    "socket.io":"~2.0.3",
+    "ent": "~2.2.0"
+  },
+  "author": "SbibouJr <sbibou.jr@email.com>",
+  "description": "Un gestionnaire de todolist ultra basique avec nodeJs, Express et Socket.io"
+}
